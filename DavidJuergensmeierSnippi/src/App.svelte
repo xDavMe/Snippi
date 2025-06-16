@@ -1,3 +1,14 @@
+<!-- 
+ZU BEGINN: Das Design was ich im 7. Assignment vorgeschlagen stimmt nicht zu 100% mit dem Implementierten überein, da ich es nicht geschafft habe es so zu implementieren.
+
+
+CSV-Layout:
+ParticipantID,Trial,Technique,Time,Error
+zufällige ID, Trial = {1,2,3}, Technique = {Manual, Snip}, Time in seconds, Anzahl der Fehler
+unabhängige Variablen: ParticipantID, Trial, Technique
+abhängige Variablen: Time, Error
+-->
+
 <script>
   import Tesseract from 'tesseract.js';
   import MustermannPersoVorne from './assets/vorneMUSTERMANN.png';
@@ -21,7 +32,8 @@
   let scaleX = 1, scaleY = 1;
   let lastSnipImg = null;
   let activeField = null;
-
+  let vorname = '';
+  let nachname = '';
 
   let experimentStep = 1; // 1 = manual, 2 = snip
 
@@ -78,25 +90,25 @@
 
 
   let rounds = [
-  {
-    name: 'MUSTERMANN',
-    front: MustermannPersoVorne,
-    back: MustermannPersoHinten,
-    correctData: correctDataMUSTERMANN
-  },
-  {
-    name: 'BUBELWUTZ',
-    front: BubelwutzPersoVorne,
-    back: BubelwutzPersoHinten,
-    correctData: correctDataBUBELWUTZ
-  },
-  {
-    name: 'PARKER',
-    front: ParkerPersoVorne,
-    back: ParkerPersoHinten,
-    correctData: correctDataPARKER
-  }
-];
+    {
+      name: 'MUSTERMANN',
+      front: MustermannPersoVorne,
+      back: MustermannPersoHinten,
+      correctData: correctDataMUSTERMANN
+    },
+    {
+      name: 'BUBELWUTZ',
+      front: BubelwutzPersoVorne,
+      back: BubelwutzPersoHinten,
+      correctData: correctDataBUBELWUTZ
+    },
+    {
+      name: 'PARKER',
+      front: ParkerPersoVorne,
+      back: ParkerPersoHinten,
+      correctData: correctDataPARKER
+    }
+  ];
 
   let currentRound = 0;
   let allResults = [];
@@ -120,17 +132,18 @@
 
 
   function generateCSV() {
-  let csv = 'ParticipantID,Trial,Technique,Time,Error\n';
-  allResults.forEach((result, i) => {
-    // Manual entry
-    csv += `${participantId},${i+1},Manual,${result.manualDuration},${Object.keys(result.manualMistakes).length}\n`;
-    // Snip entry
-    csv += `${participantId},${i+1},Snip,${result.snipDuration},${Object.keys(result.snipMistakes).length}\n`;
-  });
-  return csv;
-}
+    let csv = 'ParticipantID,Trial,Technique,Time,Error\n';
+    allResults.forEach((result, i) => {
+      // Manual entry
+      csv += `${participantId},${i+1},Manual,${result.manualDuration},${Object.keys(result.manualMistakes).length}\n`;
+      // Snip entry
+      csv += `${participantId},${i+1},Snip,${result.snipDuration},${Object.keys(result.snipMistakes).length}\n`;
+    });
+    return csv;
+  }
 
-  function download(filename, text) {
+  function download(vorname, nachname, text) {
+      const filename = `${vorname}${nachname}Snippi.csv`;
       var pom = document.createElement('a');
       pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
       pom.setAttribute('download', filename);
@@ -209,30 +222,30 @@
     Object.keys(categorized).forEach(k => categorized[k] = '');
   }
 
-function nextRound() {
-  if (currentRound < rounds.length - 1) {
-    currentRound += 1;
-    snipFinished = false;
-    experimentStep = 1;
-    Object.keys(categorized).forEach(k => categorized[k] = '');
-    manualData = {};
-    manualMistakes = {};
-    snipData = {};
-    snipMistakes = {};
-    manualDuration = null;
-    snipDuration = null;
+  function nextRound() {
+    if (currentRound < rounds.length - 1) {
+      currentRound += 1;
+      snipFinished = false;
+      experimentStep = 1;
+      Object.keys(categorized).forEach(k => categorized[k] = '');
+      manualData = {};
+      manualMistakes = {};
+      snipData = {};
+      snipMistakes = {};
+      manualDuration = null;
+      snipDuration = null;
 
-    uploadedFront = rounds[currentRound].front;
-    uploadedBack = rounds[currentRound].back;
-    manualStartTime = Date.now();
+      uploadedFront = rounds[currentRound].front;
+      uploadedBack = rounds[currentRound].back;
+      manualStartTime = Date.now();
+    }
   }
-}
 
 
   function capitalizeIfAllCaps(str) {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
 
   function handleFileChange(event, side) {
     const file = event.target.files[0];
@@ -249,28 +262,28 @@ function nextRound() {
   }
 
   function getImageDrawRect(img) {
-  const rect = img.getBoundingClientRect();
-  const containerWidth = rect.width;
-  const containerHeight = rect.height;
-  const imgAspect = img.naturalWidth / img.naturalHeight;
-  const containerAspect = containerWidth / containerHeight;
+    const rect = img.getBoundingClientRect();
+    const containerWidth = rect.width;
+    const containerHeight = rect.height;
+    const imgAspect = img.naturalWidth / img.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
 
-  let drawWidth, drawHeight, offsetX, offsetY;
-  if (imgAspect > containerAspect) {
-    // Image is wider than container
-    drawWidth = containerWidth;
-    drawHeight = containerWidth / imgAspect;
-    offsetX = 0;
-    offsetY = (containerHeight - drawHeight) / 2;
-  } else {
-    // Image is taller than container
-    drawHeight = containerHeight;
-    drawWidth = containerHeight * imgAspect;
-    offsetX = (containerWidth - drawWidth) / 2;
-    offsetY = 0;
+    let drawWidth, drawHeight, offsetX, offsetY;
+    if (imgAspect > containerAspect) {
+      // Image is wider than container
+      drawWidth = containerWidth;
+      drawHeight = containerWidth / imgAspect;
+      offsetX = 0;
+      offsetY = (containerHeight - drawHeight) / 2;
+    } else {
+      // Image is taller than container
+      drawHeight = containerHeight;
+      drawWidth = containerHeight * imgAspect;
+      offsetX = (containerWidth - drawWidth) / 2;
+      offsetY = 0;
+    }
+    return { left: rect.left + offsetX, top: rect.top + offsetY, width: drawWidth, height: drawHeight };  
   }
-  return { left: rect.left + offsetX, top: rect.top + offsetY, width: drawWidth, height: drawHeight };
-}
 
   function startSnipping() {
     snipping = true;
@@ -289,31 +302,30 @@ function nextRound() {
     }
   }
 
-function onMouseDown(e) {
-  if (!snipping) return;
-  let img;
-  if (lastSnipImg === 'front') {
-    img = document.querySelector('.image-sidebar img[alt="Hochgeladene Vorderseite"]');
-  } else if (lastSnipImg === 'back') {
-    img = document.querySelector('.image-sidebar img[alt="Hochgeladene Rückseite"]');
-  } else {
-    // fallback: first image
-    img = document.querySelector('.image-sidebar img');
+  function onMouseDown(e) {
+    if (!snipping) return;
+    let img;
+    if (lastSnipImg === 'front') {
+      img = document.querySelector('.image-sidebar img[alt="Hochgeladene Vorderseite"]');
+    } else if (lastSnipImg === 'back') {
+      img = document.querySelector('.image-sidebar img[alt="Hochgeladene Rückseite"]');
+    } else {
+      img = document.querySelector('.image-sidebar img');
+    }
+    if (!img) return;
+    imageRect = getImageDrawRect(img);
+    const tempImage = new window.Image();
+    tempImage.src = img.src;
+    tempImage.onload = () => {
+      scaleX = tempImage.naturalWidth / imageRect.width;
+      scaleY = tempImage.naturalHeight / imageRect.height;
+    };
+    startX = e.pageX;
+    startY = e.pageY;
+    selection = { left: startX, top: startY, width: 0, height: 0 };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }
-  if (!img) return;
-  imageRect = getImageDrawRect(img);
-  const tempImage = new window.Image();
-  tempImage.src = img.src;
-  tempImage.onload = () => {
-    scaleX = tempImage.naturalWidth / imageRect.width;
-    scaleY = tempImage.naturalHeight / imageRect.height;
-  };
-  startX = e.pageX;
-  startY = e.pageY;
-  selection = { left: startX, top: startY, width: 0, height: 0 };
-  window.addEventListener('mousemove', onMouseMove);
-  window.addEventListener('mouseup', onMouseUp);
-}
 
   function onMouseMove(e) {
     endX = e.pageX;
@@ -326,99 +338,98 @@ function onMouseDown(e) {
     };
   }
 
-function parseAnschrift(ocrText) {
-  console.log('Parsing OCR text:', ocrText);
-  let adresse = '', plz = '', ort = '', hausnummer = '';
+  function parseAnschrift(ocrText) {
+    console.log('Parsing OCR text:', ocrText);
+    let adresse = '', plz = '', ort = '', hausnummer = '';
 
-  // Try to split lines
-  const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
-  console.log('lines:', lines);
-  if (lines[0]) {
-    const splittedcitydetails = lines[0].split(' ');
-    plz = splittedcitydetails[0]; 
-    ort = splittedcitydetails[1]; 
-  }
-  if (lines[1]) {
-    let splittedstreet = lines[1].split(' ');
-    if (splittedstreet.length > 2) {
-      console.log(' splittedstreet:', splittedstreet);
-      if(splittedstreet[1] == "STR." || splittedstreet[1] == "STR," || splittedstreet[1] == "STR") {
-      console.log('ich komme hier rein');
-      splittedstreet = [splittedstreet[0] + splittedstreet[1], splittedstreet[2]];
-      }
+    // Try to split lines
+    const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
+    console.log('lines:', lines);
+    if (lines[0]) {
+      const splittedcitydetails = lines[0].split(' ');
+      plz = splittedcitydetails[0]; 
+      ort = splittedcitydetails[1]; 
     }
-    console.log('splittedstreet:', splittedstreet);
-    adresse = capitalizeIfAllCaps(splittedstreet[0].replace(/,/g, '.'));
-    hausnummer = splittedstreet[1].replace(/\D/g, '');
+    if (lines[1]) {
+      let splittedstreet = lines[1].split(' ');
+      if (splittedstreet.length > 2) {
+        console.log(' splittedstreet:', splittedstreet);
+        if(splittedstreet[1] == "STR." || splittedstreet[1] == "STR," || splittedstreet[1] == "STR") {
+        console.log('ich komme hier rein');
+        splittedstreet = [splittedstreet[0] + splittedstreet[1], splittedstreet[2]];
+        }
+      }
+      console.log('splittedstreet:', splittedstreet);
+      adresse = capitalizeIfAllCaps(splittedstreet[0].replace(/,/g, '.'));
+      hausnummer = splittedstreet[1].replace(/\D/g, '');
+    }
+
+
+    console.log('Parsed Anschrift:', { adresse, plz, ort, hausnummer });
+    return { adresse, plz, ort, hausnummer };
   }
 
+  async function onMouseUp() {
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+    stopSnipping();``
 
-  console.log('Parsed Anschrift:', { adresse, plz, ort, hausnummer });
-  return { adresse, plz, ort, hausnummer };
-}
+    let img;
+    if (lastSnipImg === 'front') {
+      img = document.querySelector('.image-sidebar img[alt="Hochgeladene Vorderseite"]');
+    } else if (lastSnipImg === 'back') {
+      img = document.querySelector('.image-sidebar img[alt="Hochgeladene Rückseite"]');
+    } else {
+      img = document.querySelector('.image-sidebar img');
+    }
+    if (!img || !selection || !imageRect) return;
 
-async function onMouseUp() {
-  window.removeEventListener('mousemove', onMouseMove);
-  window.removeEventListener('mouseup', onMouseUp);
-  stopSnipping();``
+    if (!scaleX || !scaleY) {
+      const tempImage = new window.Image();
+      tempImage.src = img.src;
+      await new Promise(res => tempImage.onload = res);
+      scaleX = tempImage.naturalWidth / imageRect.width;
+      scaleY = tempImage.naturalHeight / imageRect.height;
+    }
 
-  let img;
-  if (lastSnipImg === 'front') {
-    img = document.querySelector('.image-sidebar img[alt="Hochgeladene Vorderseite"]');
-  } else if (lastSnipImg === 'back') {
-    img = document.querySelector('.image-sidebar img[alt="Hochgeladene Rückseite"]');
-  } else {
-    img = document.querySelector('.image-sidebar img');
-  }
-  if (!img || !selection || !imageRect) return;
+    const sx = (selection.left - imageRect.left) * scaleX;
+    const sy = (selection.top - imageRect.top) * scaleY;
+    const sw = selection.width * scaleX;
+    const sh = selection.height * scaleY;
 
-  if (!scaleX || !scaleY) {
     const tempImage = new window.Image();
     tempImage.src = img.src;
     await new Promise(res => tempImage.onload = res);
-    scaleX = tempImage.naturalWidth / imageRect.width;
-    scaleY = tempImage.naturalHeight / imageRect.height;
-  }
 
-  const sx = (selection.left - imageRect.left) * scaleX;
-  const sy = (selection.top - imageRect.top) * scaleY;
-  const sw = selection.width * scaleX;
-  const sh = selection.height * scaleY;
+    const canvas = document.createElement('canvas');
+    canvas.width = sw;
+    canvas.height = sh;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(tempImage, sx, sy, sw, sh, 0, 0, sw, sh);
 
-  const tempImage = new window.Image();
-  tempImage.src = img.src;
-  await new Promise(res => tempImage.onload = res);
+    imageUrl = canvas.toDataURL();
 
-  const canvas = document.createElement('canvas');
-  canvas.width = sw;
-  canvas.height = sh;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(tempImage, sx, sy, sw, sh, 0, 0, sw, sh);
-
-  imageUrl = canvas.toDataURL();
-
-  const result = await Tesseract.recognize(canvas, 'deu', {
-    logger: m => console.log(m)
-  });
-  ocrText = result.data.text;
+    const result = await Tesseract.recognize(canvas, 'deu', {
+      logger: m => console.log(m)
+    });
+    ocrText = result.data.text;
 
 
-  if (activeField === 'anschrift') {
-    const parsed = parseAnschrift(ocrText);
-    categorized.adresse = capitalizeIfAllCaps(parsed.adresse);
-    categorized.plz = parsed.plz;
-    categorized.ort = capitalizeIfAllCaps(parsed.ort);
-    categorized.hausnummer = parsed.hausnummer;
-    activeField = null;
-  } else if (activeField) {
-    categorized[activeField] = capitalizeIfAllCaps(ocrText);
-    if(activeField === 'staatsangehoerigkeit') {
-      categorized.staatsangehoerigkeit = categorized.staatsangehoerigkeit.toLowerCase();
+    if (activeField === 'anschrift') {
+      const parsed = parseAnschrift(ocrText);
+      categorized.adresse = capitalizeIfAllCaps(parsed.adresse);
+      categorized.plz = parsed.plz;
+      categorized.ort = capitalizeIfAllCaps(parsed.ort);
+      categorized.hausnummer = parsed.hausnummer;
+      activeField = null;
+    } else if (activeField) {
+      categorized[activeField] = capitalizeIfAllCaps(ocrText);
+      if(activeField === 'staatsangehoerigkeit') {
+        categorized.staatsangehoerigkeit = categorized.staatsangehoerigkeit.toLowerCase();
+      }
+      activeField = null;
     }
-    activeField = null;
   }
-}
-
 </script>
 
 <main>
@@ -453,7 +464,19 @@ async function onMouseUp() {
 
 
     <div class="upload-section">
-        <div style="margin-bottom: 1rem;">
+      <div style="margin-bottom: 1rem;">
+        <label>
+          Vorname:
+          <input type="text" bind:value={vorname} required />
+        </label>
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label>
+          Nachname:
+          <input type="text" bind:value={nachname} required />
+        </label>
+      </div>
+      <div style="margin-bottom: 1rem;">
         <button type="button" on:click={() => {
           uploadedFront = BubelwutzPersoVorne;
           uploadedBack = BubelwutzPersoHinten;
@@ -487,14 +510,12 @@ async function onMouseUp() {
           />
         {/if} -->
       </div> 
-      <button class="start-btn" style="margin-top:2rem;" on:click={startManualRound} disabled={!uploadedFront || !uploadedBack}>
+      <button class="start-btn" style="margin-top:2rem;" on:click={startManualRound} disabled={!uploadedFront || !uploadedBack || !vorname.trim() || !nachname.trim()}>
         Experiment starten
       </button>
     </div>
   </div>
   {:else}
-    <!-- <button on:click={startSnipping}>Snippi</button> -->
-
     {#if snipping}
       <div
         class="snip-overlay"
@@ -611,7 +632,6 @@ async function onMouseUp() {
             {/if}
 
             {#if experimentStep === 1}
-              <!-- Show your input fields and a "Fertig" button -->
               <button on:click={finishManualRound}>Fertig</button>
             {/if}
             {#if experimentStep === 2 && !snipFinished}
@@ -674,10 +694,9 @@ async function onMouseUp() {
       <button on:click={nextRound}>Nächste Runde</button>
     {:else}
       <h3>Alle Runden abgeschlossen!</h3>
-      <button on:click={() => download('experiment_results.csv', generateCSV())}>
+      <button on:click={() => download(vorname, nachname, generateCSV())}>
         Download CSV
       </button>
-      <!-- Optionally show allResults summary here -->
     {/if}
   </div>
 {/if}
